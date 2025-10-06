@@ -15,7 +15,7 @@ Dann kann man mithilfe des folgenden Befehls das Programm starten:
 python3 main.py --output-file out.pdf --input-file <path_to_scoreg_table> --stufen <comma_seperated_list_of_stufen>
 ```
 
-Für den Parameter `stufen` können folgende Stufenausdrücke beliebig:
+Für den Parameter `stufen` können folgende Stufenausdrücke beliebig kombiniert werden:
 - BIEBER
 - WICHTEL
 - WOELFLINGE
