@@ -2,7 +2,8 @@
 from dataclasses import dataclass
 from reportlab.lib.pagesizes import A5
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, PageBreak
-from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.enums import TA_RIGHT
 import pandas as pd
 from enum import Enum
 from typing import List
@@ -87,6 +88,8 @@ def _clean_birthday(value):
 
 def parse_to_page_info(df: pd.DataFrame) -> List[PageInfoContainer]:
     pages = []
+    df = df.fillna('')
+    df.sort_values(by='Nachname', ascending=True, inplace=True)
     for _, row in df.iterrows():
         pages.append(PageInfoContainer(
             firstname=row['Vorname'],
@@ -101,9 +104,9 @@ def parse_to_page_info(df: pd.DataFrame) -> List[PageInfoContainer]:
             street=row['Strasse'],
             state=row['Bundesland'],
             country=row['Land'],
-            contact_1_kind=row['Kontakt 1 Art'],
+            contact_1_kind=row.get('Kontakt 1 Art'),
             contact_1_name=row['Kontakt 1'],
-            contact_1_email=row['Kontakt 1 E-Mail'],
+            contact_1_email=row.get('Kontakt 1 E-Mail'),
             contact_1_phone=row['Kontakt 1 Telefon'],
             contact_2_kind=row['Kontakt 2 Art'],
             contact_2_name=row['Kontakt 2'],
@@ -116,6 +119,11 @@ def create_pdf(filename: str, data: List[PageInfoContainer]):
     doc = SimpleDocTemplate(filename, pagesize=A5)
     styles = getSampleStyleSheet()
     normal_style = styles["Normal"]
+    right_align = ParagraphStyle(
+        name="RightAlign",
+        parent=normal_style,  # inherit base font, size, etc.
+        alignment=TA_RIGHT
+    )
 
     story = []
 
@@ -197,6 +205,33 @@ def create_pdf(filename: str, data: List[PageInfoContainer]):
             )
         )
         story.append(kontakt2_table)
+        story.append(Spacer(1, 10))
+
+        # -- medical data --
+        med_data = [
+            #["Art:", Paragraph(f"{item.contact_2_kind}", normal_style)],
+            ["Allergien:", Paragraph(f"", normal_style)],
+            ["Medikamente:", Paragraph("", normal_style)],
+            ["Unverträglichkeiten:", Paragraph("", normal_style)],
+            [Paragraph("physische oder chronische Krankheiten:", right_align), Paragraph("", normal_style)],
+            [Paragraph("psychische Krankheiten:", right_align), Paragraph("", normal_style)],
+        ]
+        med_table = Table([["MEDIZINISCHES", ""]] + med_data, colWidths=[100, 230])
+        med_table.setStyle(
+            TableStyle(
+                [
+                    ("SPAN", (0, 0), (-1, 0)),
+                    ("BACKGROUND", (0, 0), (-1, 0), colors.lightgrey),
+                    ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                    ("ALIGN", (0, 0), (0, -1), "RIGHT"),
+                    ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                    ("FONTNAME", (0, 1), (-1, -1), "Helvetica"),
+                    ("FONTSIZE", (0, 0), (-1, -1), 9),
+                    ("GRID", (0, 0), (-1, -1), 0.25, colors.grey),
+                ]
+            )
+        )
+        story.append(med_table)
 
         # Force page break
         story.append(PageBreak())
