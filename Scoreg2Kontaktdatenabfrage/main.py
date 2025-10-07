@@ -5,7 +5,7 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.enums import TA_RIGHT
 import pandas as pd
 from enum import Enum
-from typing import List
+from typing import List, cast
 from dataclasses import dataclass
 import argparse
 from reportlab.lib import colors
@@ -48,7 +48,7 @@ def parse_args() -> ParsedArgs:
 def filter_by_stufen(df: pd.DataFrame, selected_stufen: List[Stufe]) -> pd.DataFrame:
     if (len(selected_stufen) == 0):
         return df
-    return df[df['Stufe'].isin(selected_stufen)]
+    return cast(pd.DataFrame, df[df['Stufe'].isin(selected_stufen)])
 
 def create_pdf(filename: str, data: List[MemberInfo]):
     doc = SimpleDocTemplate(filename, pagesize=A5)
